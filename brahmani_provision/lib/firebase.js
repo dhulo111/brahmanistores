@@ -6,17 +6,27 @@ import fs from 'fs';
 // Prevent re-initialization in development
 if (getApps().length === 0) {
   try {
-    const serviceAccountPath = path.join(process.cwd(), 'firebase-service-account.json');
-    
-    if (fs.existsSync(serviceAccountPath)) {
-      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-      
+    let serviceAccount;
+
+    // 1. Try to load from environment variable (For Vercel / Production)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    } 
+    // 2. Fallback to local file (For Local Development)
+    else {
+      const serviceAccountPath = path.join(process.cwd(), 'firebase-service-account.json');
+      if (fs.existsSync(serviceAccountPath)) {
+        serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+      }
+    }
+
+    if (serviceAccount) {
       initializeApp({
         credential: cert(serviceAccount)
       });
       console.log('✅ Firebase Admin initialized successfully');
     } else {
-      console.warn('⚠️ firebase-service-account.json not found. Push notifications will be disabled.');
+      console.warn('⚠️ Firebase credentials not found. Push notifications disabled. Set FIREBASE_SERVICE_ACCOUNT_KEY env var.');
     }
   } catch (error) {
     console.error('🔥 Firebase Admin initialization error:', error);
