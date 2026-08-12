@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "542380034989",
+    "project_id": "brahmani-stores",
+    "storage_bucket": "brahmani-stores.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542380034989:android:7824cd83fb87ccefe5ef24",
+        "android_client_info": {
+          "package_name": "com.example.brahmani_stores"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "542380034989-q0fl1623u5mda84nbitsfmb3acgrp8a6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.brahmani_stores",
+            "certificate_hash": "954e871aa4b47c54935903363db664f15d5b9c4e"
+          }
+        },
+        {
+          "client_id": "542380034989-108vhkhitf7mpvp7f905hso7i8vsnana.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYaG091Yp_v7XhoK1mADBXbUXmwvcWxrk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "542380034989-108vhkhitf7mpvp7f905hso7i8vsnana.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
