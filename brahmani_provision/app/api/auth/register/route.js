@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 import { registerSchema } from '@/lib/validations/auth';
 import bcrypt from 'bcrypt';
+import { sendNotification } from '@/lib/firebase';
 
 export async function POST(req) {
   console.log('📥 Received registration request!');
@@ -106,14 +107,12 @@ export async function POST(req) {
     // Notify all Admins if a new regular user registers
     if (role !== 'ADMIN') {
       try {
-        const { sendAdminNotification } = require('@/lib/firebase');
         // Fetch all admins with FCM tokens
         const admins = await db.user.findMany({
           where: { role: 'ADMIN', fcmToken: { not: null } },
           select: { fcmToken: true }
         });
         
-        const { sendNotification } = require('@/lib/firebase');
         for (const admin of admins) {
           await sendNotification(
             admin.fcmToken,

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../auth/providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -13,7 +11,7 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('બ્રહ્માણી પ્રોવિઝન સ્ટોર્સ'), // Brahmani Provision Stores
       ),
       body: const Center(
-        child: Text('અહીં પ્રોડક્ટ્સ બતાવવામાં આવશે.'), // Products will be shown here
+        child: Text('અહીં ડેશબોર્ડ બતાવવામાં આવશે.'), // Dashboard will be shown here
       ),
     );
   }

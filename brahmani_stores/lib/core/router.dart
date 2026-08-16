@@ -6,9 +6,10 @@ import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/home/screens/home_screen.dart';
+import '../features/home/screens/products_screen.dart';
 import '../features/home/screens/main_layout.dart';
 import '../features/profile/screens/profile_screen.dart';
-import '../features/verification/screens/verification_screen.dart';
+import '../features/admin/screens/user_management_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -77,8 +78,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/verification',
-                builder: (context, state) => const VerificationScreen(),
+                path: '/products',
+                builder: (context, state) => const ProductsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/users',
+                builder: (context, state) => const UserManagementScreen(),
               ),
             ],
           ),

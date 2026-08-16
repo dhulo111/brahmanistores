@@ -2,9 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
+const bool useProduction =true; // Change to true to use the live backend
+
+const String localBaseUrl = 'http://10.61.47.137:3000/api';
+const String productionBaseUrl = 'https://brahmanistores.vercel.app/api';
+
 final apiClientProvider = Provider<Dio>((ref) {
   final dio = Dio(BaseOptions(
-    baseUrl: 'http://10.54.220.137:3000/api', // Physical device IP
+    baseUrl: useProduction ? productionBaseUrl : localBaseUrl,
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
     responseType: ResponseType.json,

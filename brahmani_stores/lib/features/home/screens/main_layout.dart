@@ -72,16 +72,18 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   }
 
   int getBranchIndex(int uiIndex, bool isAdmin) {
-    if (isAdmin) return uiIndex; // 0->0, 1->1, 2->2
+    if (isAdmin) return uiIndex; // 0->0, 1->1, 2->2, 3->3
     if (uiIndex == 0) return 0;
-    if (uiIndex == 1) return 2;
+    if (uiIndex == 1) return 1; // Products
+    if (uiIndex == 2) return 3; // Profile
     return 0;
   }
 
   int getUiIndex(int branchIndex, bool isAdmin) {
     if (isAdmin) return branchIndex;
     if (branchIndex == 0) return 0;
-    if (branchIndex == 2) return 1;
+    if (branchIndex == 1) return 1;
+    if (branchIndex == 3) return 2;
     return 0;
   }
 
@@ -90,7 +92,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final int currentIndex = widget.navigationShell.currentIndex;
     final user = ref.watch(authProvider).user;
     final bool isAdmin = user?.role == 'ADMIN';
-    final int tabCount = isAdmin ? 3 : 2;
+    final int tabCount = isAdmin ? 4 : 3;
     final int uiIndex = getUiIndex(currentIndex, isAdmin);
     
     final bool isNavBarVisible = ref.watch(navBarVisibilityProvider);
@@ -210,14 +212,18 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                                           icon: Icons.home_rounded,
                                           isSelected: uiIndex == 0,
                                         ),
+                                        _buildNavItem(
+                                          icon: Icons.shopping_bag_rounded,
+                                          isSelected: uiIndex == 1,
+                                        ),
                                         if (isAdmin)
                                           _buildNavItem(
-                                            icon: Icons.verified_user_rounded,
-                                            isSelected: uiIndex == 1,
+                                            icon: Icons.people_alt_rounded,
+                                            isSelected: uiIndex == 2,
                                           ),
                                         _buildNavItem(
                                           icon: Icons.person_rounded,
-                                          isSelected: uiIndex == (isAdmin ? 2 : 1),
+                                          isSelected: uiIndex == (isAdmin ? 3 : 2),
                                           avatarUrl: user?.avatarUrl,
                                         ),
                                       ],
@@ -232,8 +238,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                       
                       // 2. Floating Tags
                       _buildFloatingTag('હોમ', 0, tabWidth),
-                      if (isAdmin) _buildFloatingTag('મંજૂરી', 1, tabWidth),
-                      _buildFloatingTag('પ્રોફાઇલ', isAdmin ? 2 : 1, tabWidth),
+                      _buildFloatingTag('પ્રોડક્ટ્સ', 1, tabWidth),
+                      if (isAdmin) _buildFloatingTag('યુઝર્સ', 2, tabWidth),
+                      _buildFloatingTag('પ્રોફાઇલ', isAdmin ? 3 : 2, tabWidth),
                     ],
                   );
                 },
