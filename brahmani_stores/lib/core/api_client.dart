@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
-const bool useProduction=false; // Change to true to use the live backend
+const bool useProduction=true; // Change to true to use the live backend
 
 const String localBaseUrl = 'http://10.87.225.137:3000/api';
 const String productionBaseUrl = 'https://brahmanistores.vercel.app/api';

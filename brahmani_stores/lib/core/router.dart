@@ -10,6 +10,9 @@ import '../features/home/screens/products_screen.dart';
 import '../features/home/screens/main_layout.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/admin/screens/user_management_screen.dart';
+import '../features/admin/screens/user_ledger_screen.dart';
+import '../features/ledger/screens/my_ledger_screen.dart';
+import '../features/admin/screens/admin_all_transactions_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -88,6 +91,27 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/users',
                 builder: (context, state) => const UserManagementScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'ledger/:id',
+                    builder: (context, state) {
+                      final userId = state.pathParameters['id']!;
+                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      return UserLedgerScreen(
+                        userId: userId,
+                        userName: extra['userName'] ?? 'User',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/my-ledger',
+                builder: (context, state) => const MyLedgerScreen(),
               ),
             ],
           ),
@@ -96,6 +120,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/admin-transactions',
+                builder: (context, state) => const AdminAllTransactionsScreen(),
               ),
             ],
           ),

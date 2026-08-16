@@ -5,6 +5,7 @@ import '../providers/user_management_provider.dart';
 import '../models/admin_user_model.dart';
 import 'package:intl/intl.dart';
 import '../../../core/providers/nav_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class UserManagementScreen extends ConsumerStatefulWidget {
   const UserManagementScreen({super.key});
@@ -395,28 +396,48 @@ class _EditUserSheetState extends ConsumerState<_EditUserSheet> {
             const SizedBox(height: 32),
             _isSaving
                 ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
-                : Row(
+                : Column(
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _delete,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.errorColor,
-                            side: const BorderSide(color: AppTheme.errorColor),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context); // Close sheet
+                            GoRouter.of(context).push('/users/ledger/${widget.user.id}', extra: {'userName': '${widget.user.firstName} ${widget.user.lastName}'});
+                          },
+                          icon: const Icon(Icons.menu_book),
+                          label: const Text('ખાતું જુઓ (View Ledger)'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          child: const Text('ડિલીટ કરો'),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _save,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _delete,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppTheme.errorColor,
+                                side: const BorderSide(color: AppTheme.errorColor),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              child: const Text('ડિલીટ કરો'),
+                            ),
                           ),
-                          child: const Text('સાચવો (Save)'),
-                        ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _save,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              child: const Text('સાચવો (Save)'),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

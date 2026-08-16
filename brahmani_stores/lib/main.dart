@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme.dart';
 import 'core/router.dart';
+import 'core/notification_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -17,6 +18,9 @@ void main() async {
   
   // Initialize Firebase
   await Firebase.initializeApp();
+  
+  // Initialize Local Notifications and Channels
+  await NotificationService.initialize();
   
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   
