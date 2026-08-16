@@ -18,8 +18,10 @@ model User {
   role         String   @default("USER")
   status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
   fcmToken     String?
+  balance      Float    @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  transactions Transaction[]
 }
 
 model Product {
@@ -30,4 +32,14 @@ model Product {
   isAvailable  Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount      Float
+  description String
+  type        String   // "UDHAR" or "JAMA"
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
 }

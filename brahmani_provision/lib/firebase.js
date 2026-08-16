@@ -44,6 +44,20 @@ export const sendNotification = async (fcmToken, title, body, data = {}) => {
       },
       data,
       token: fcmToken,
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'high_importance_channel',
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            contentAvailable: true,
+            sound: 'default'
+          }
+        }
+      }
     };
 
     const response = await getMessaging().send(message);
