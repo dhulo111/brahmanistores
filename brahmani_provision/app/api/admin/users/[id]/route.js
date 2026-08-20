@@ -64,6 +64,12 @@ export async function DELETE(req, { params }) {
   try {
     const { id } = await params;
 
+    // Delete related transactions first to prevent foreign key constraint violations
+    await db.transaction.deleteMany({
+      where: { userId: id },
+    });
+
+    // Then delete the user
     await db.user.delete({
       where: { id: id },
     });
