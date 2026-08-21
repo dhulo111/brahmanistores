@@ -67,22 +67,33 @@ export async function POST(req) {
       })
     ]);
 
+    // Fetch all user transactions to dynamically calculate the true balance
+    const allUserTx = await db.transaction.findMany({
+      where: { userId: userId }
+    });
+
+    let currentTotal = 0;
+    for (const tx of allUserTx) {
+      if (tx.type === 'UDHAR') currentTotal += tx.amount;
+      if (tx.type === 'JAMA') currentTotal -= tx.amount;
+    }
+
     // Send push notification to user
     if (updatedUser.fcmToken) {
       const title = type === 'UDHAR' ? 'નવી ઉધાર એન્ટ્રી (New Bill)' : 'નવી જમા એન્ટ્રી (Payment Received)';
       
       const shortDesc = description.length > 40 ? description.substring(0, 40) + '...' : description;
       const bodyText = type === 'UDHAR' 
-        ? `₹${parsedAmount} નું ઉધાર બિલ ઉમેરાયું છે. (વિગત: ${shortDesc})\nકુલ બાકી: ₹${updatedUser.balance}`
-        : `₹${parsedAmount} જમા થયા છે. (વિગત: ${shortDesc})\nકુલ બાકી: ₹${updatedUser.balance}`;
+        ? `₹${parsedAmount} નું ઉધાર બિલ ઉમેરાયું છે. (વિગત: ${shortDesc})\nકુલ બાકી: ₹${currentTotal}`
+        : `₹${parsedAmount} જમા થયા છે. (વિગત: ${shortDesc})\nકુલ બાકી: ₹${currentTotal}`;
         
       await sendNotification(updatedUser.fcmToken, title, bodyText, {
         type: 'transaction',
         transactionId: transaction.id
-      });
+      }, 'https://files.catbox.moe/wr1bco.png');
     }
 
-    return NextResponse.json({ message: 'success', transaction, balance: updatedUser.balance }, { status: 201 });
+    return NextResponse.json({ message: 'success', transaction, balance: currentTotal }, { status: 201 });
   } catch (error) {
     console.error('Create transaction error:', error);
     return NextResponse.json({ error: 'error_internal_server' }, { status: 500 });

@@ -44,6 +44,10 @@ class NotificationService {
       AndroidNotification? android = message.notification?.android;
 
       if (notification != null && android != null) {
+        // If there's an imageUrl in the notification, we could theoretically fetch it.
+        // For simplicity, since foreground notifications use the local plugin, 
+        // we'll just show the large icon. If you want a full big picture, you'd download it.
+        
         _notificationsPlugin.show(
           id: notification.hashCode,
           title: notification.title,
@@ -56,6 +60,11 @@ class NotificationService {
               importance: Importance.max,
               priority: Priority.high,
               icon: '@mipmap/ic_launcher',
+              // If Firebase sends imageUrl, it's accessible via android.imageUrl.
+              // To show it locally, you normally download it to a file. 
+              // Since it's a foreground notification, we can just rely on the system 
+              // or keep it simple. If they want it perfect, we use BigPictureStyle but 
+              // it requires HTTP download in dart.
             ),
           ),
         );

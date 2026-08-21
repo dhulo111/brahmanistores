@@ -33,21 +33,25 @@ if (getApps().length === 0) {
   }
 }
 
-export const sendNotification = async (fcmToken, title, body, data = {}) => {
+export const sendNotification = async (fcmToken, title, body, data = {}, imageUrl = null) => {
   if (getApps().length === 0 || !fcmToken) return false;
 
   try {
+    const notificationPayload = {
+      title,
+      body,
+    };
+    if (imageUrl) notificationPayload.imageUrl = imageUrl;
+
     const message = {
-      notification: {
-        title,
-        body,
-      },
+      notification: notificationPayload,
       data,
       token: fcmToken,
       android: {
         priority: 'high',
         notification: {
           channelId: 'high_importance_channel',
+          ...(imageUrl && { imageUrl: imageUrl })
         }
       },
       apns: {

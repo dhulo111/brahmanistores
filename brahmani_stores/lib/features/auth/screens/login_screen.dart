@@ -44,10 +44,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.storefront,
-                    size: 80,
-                    color: AppTheme.primaryGreen,
+                  Image.asset(
+                    'lib/assets/images/brahmani mata logo.png',
+                    height: 120,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 24),
                   Text(

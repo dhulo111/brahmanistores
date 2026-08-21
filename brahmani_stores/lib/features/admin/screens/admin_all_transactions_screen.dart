@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -150,6 +151,26 @@ class _AddGlobalEntrySheetState extends ConsumerState<_AddGlobalEntrySheet> {
     }
   }
 
+  void _showUserSearchDialog(List<AdminUser> users) async {
+    final AdminUser? selected = await showDialog<AdminUser>(
+      context: context,
+      builder: (context) => _SearchUserDialog(users: users),
+    );
+    if (selected != null) {
+      setState(() => _selectedUser = selected);
+    }
+  }
+
+  void _showProductSearchDialog(List<ProductModel> products) async {
+    final ProductModel? selected = await showDialog<ProductModel>(
+      context: context,
+      builder: (context) => _SearchProductDialog(products: products),
+    );
+    if (selected != null) {
+      _onProductSelected(selected);
+    }
+  }
+
   void _onProductSelected(ProductModel? product) {
     setState(() {
       _selectedProduct = product;
@@ -263,18 +284,19 @@ class _AddGlobalEntrySheetState extends ConsumerState<_AddGlobalEntrySheet> {
           ),
           const SizedBox(height: 16),
           
-          DropdownButtonFormField<AdminUser>(
-            decoration: const InputDecoration(labelText: 'ગ્રાહક પસંદ કરો (Select User)'),
-            hint: const Text('ગ્રાહક પસંદ કરો'),
-            value: _selectedUser,
-            isExpanded: true,
-            items: approvedUsers.map((user) {
-              return DropdownMenuItem(
-                value: user,
-                child: Text('${user.firstName} ${user.lastName} - ${user.phone}'),
-              );
-            }).toList(),
-            onChanged: (val) => setState(() => _selectedUser = val),
+          InkWell(
+            onTap: () => _showUserSearchDialog(approvedUsers),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'ગ્રાહક પસંદ કરો (Select User)',
+                suffixIcon: Icon(Icons.search),
+              ),
+              child: Text(
+                _selectedUser != null 
+                    ? '${_selectedUser!.firstName} ${_selectedUser!.lastName} - ${_selectedUser!.phone}' 
+                    : 'ગ્રાહક પસંદ કરો (અહીં ક્લિક કરો)',
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           
@@ -288,21 +310,20 @@ class _AddGlobalEntrySheetState extends ConsumerState<_AddGlobalEntrySheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<ProductModel>(
-                  decoration: const InputDecoration(
-                    labelText: 'પ્રોડક્ટ પસંદ કરો (Optional)',
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                InkWell(
+                  onTap: () => _showProductSearchDialog(productsState.products.where((p) => p.isAvailable).toList()),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'પ્રોડક્ટ પસંદ કરો (Optional)',
+                      suffixIcon: Icon(Icons.search),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    child: Text(
+                      _selectedProduct != null 
+                          ? '${_selectedProduct!.name} (₹${_selectedProduct!.price})' 
+                          : 'પ્રોડક્ટ પસંદ કરવા અહીં ક્લિક કરો',
+                    ),
                   ),
-                  hint: const Text('પ્રોડક્ટ પસંદ કરો'),
-                  value: _selectedProduct,
-                  isExpanded: true,
-                  items: productsState.products.where((p) => p.isAvailable).map((product) {
-                    return DropdownMenuItem(
-                      value: product,
-                      child: Text('${product.name} (₹${product.price})'),
-                    );
-                  }).toList(),
-                  onChanged: _onProductSelected,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -483,3 +504,163 @@ class BillItem {
     required this.subtotal,
   });
 }
+
+class _SearchUserDialog extends StatefulWidget {
+  final List<AdminUser> users;
+  const _SearchUserDialog({required this.users});
+  @override
+  State<_SearchUserDialog> createState() => _SearchUserDialogState();
+}
+
+class _SearchUserDialogState extends State<_SearchUserDialog> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.users.where((u) {
+      final query = _searchQuery.toLowerCase();
+      final fullName = '${u.firstName} ${u.lastName}'.toLowerCase();
+      final phone = u.phone.toLowerCase();
+      return fullName.contains(query) || phone.contains(query);
+    }).toList();
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceDark.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: 'ગ્રાહકનું નામ અથવા નંબર લખો...',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                ),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? const Center(child: Text('કોઈ ગ્રાહક મળ્યા નથી'))
+                      : ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final u = filtered[index];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppTheme.primaryGreen.withOpacity(0.2),
+                                backgroundImage: u.avatarUrl != null && u.avatarUrl!.isNotEmpty
+                                    ? NetworkImage(u.avatarUrl!)
+                                    : null,
+                                child: u.avatarUrl == null || u.avatarUrl!.isEmpty
+                                    ? Text(u.firstName.isNotEmpty ? u.firstName[0].toUpperCase() : '?')
+                                    : null,
+                              ),
+                              title: Text('${u.firstName} ${u.lastName}'),
+                              subtitle: Text(u.phone),
+                              onTap: () => Navigator.pop(context, u),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchProductDialog extends StatefulWidget {
+  final List<ProductModel> products;
+  const _SearchProductDialog({required this.products});
+  @override
+  State<_SearchProductDialog> createState() => _SearchProductDialogState();
+}
+
+class _SearchProductDialogState extends State<_SearchProductDialog> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.products.where((p) {
+      final query = _searchQuery.toLowerCase();
+      final name = p.name.toLowerCase();
+      final englishName = (p.englishName ?? '').toLowerCase();
+      return name.contains(query) || englishName.contains(query);
+    }).toList();
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceDark.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: 'પ્રોડક્ટનું નામ (Gujarati or English) લખો...',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                ),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? const Center(child: Text('કોઈ પ્રોડક્ટ મળી નથી'))
+                      : ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final p = filtered[index];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: Colors.white10,
+                                child: const Icon(Icons.shopping_bag, color: AppTheme.primaryGreen),
+                              ),
+                              title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: p.englishName != null && p.englishName!.isNotEmpty
+                                  ? Text(p.englishName!)
+                                  : null,
+                              trailing: Text(
+                                '₹${p.price.toStringAsFixed(2)}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen, fontSize: 16),
+                              ),
+                              onTap: () => Navigator.pop(context, p),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
