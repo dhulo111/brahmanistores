@@ -224,6 +224,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
            errorMessage = 'પ્રોફાઇલ ફોટો અપલોડ કરવામાં નિષ્ફળ. (Supabase Error)'; // Avatar upload failed
          } else if (serverError == 'error_internal_server') {
            errorMessage = 'સર્વર માં ખામી છે. (Database or Server Error)'; // Server error
+         } else if (serverError == 'error_invalid_otp') {
+           errorMessage = 'તમે દાખલ કરેલો OTP ખોટો છે';
+         } else if (serverError == 'error_otp_expired') {
+           errorMessage = 'આ OTP એક્સપાયર થઈ ગયો છે';
+         } else if (serverError == 'error_otp_not_found') {
+           errorMessage = 'કૃપા કરીને ફરીથી OTP મોકલો';
          }
       } else {
         print('Error Response was null. Error: $e');
@@ -231,6 +237,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       
       state = state.copyWith(isLoading: false, error: errorMessage);
+      return false;
+    }
+  }
+
+  Future<bool> sendOtp(String email, String firstName, String lastName) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _dio.post('/auth/send-otp', data: {
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+      });
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on DioException catch (e) {
+      String errorMessage = 'OTP મોકલવામાં નિષ્ફળતા'; // Failed to send OTP
+      if (e.response != null && e.response!.data != null) {
+         final serverError = e.response!.data['error'];
+         if (serverError == 'error_email_in_use') {
+           errorMessage = 'આ ઇમેઇલ પહેલેથી જ નોંધાયેલ છે'; // Email already registered
+         } else {
+           errorMessage = e.response!.data['message'] ?? errorMessage;
+         }
+      }
+      state = state.copyWith(isLoading: false, error: errorMessage);
+      return false;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'OTP Error: $e');
       return false;
     }
   }

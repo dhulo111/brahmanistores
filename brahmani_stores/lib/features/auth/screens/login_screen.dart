@@ -129,7 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           context.go('/');
                         } else if (result['action'] == 'register' && mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('ખાતું મળ્યું નથી. કૃપા કરીને રજીસ્ટર કરો.')), // Account not found
+                            const SnackBar(content: Text('કૃપા કરીને પહેલા નોંધણી કરો')), // Please register first
                           );
                           context.push('/register', extra: result['data']);
                         }

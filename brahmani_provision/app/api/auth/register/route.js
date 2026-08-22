@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { registerSchema } from '@/lib/validations/auth';
 import bcrypt from 'bcrypt';
 import { sendNotification } from '@/lib/firebase';
+import { sendOtpEmail } from '@/lib/email';
 
 export async function POST(req) {
   console.log('📥 Received registration request!');
@@ -17,6 +18,11 @@ export async function POST(req) {
     const password = formData.get('password');
     const role = formData.get('role') || 'USER'; // Default to USER
     const avatar = formData.get('avatar'); // File object
+    const otpCode = formData.get('otpCode'); // Extract OTP code
+
+    if (!otpCode) {
+      return NextResponse.json({ error: 'error_missing_otp', message: 'OTP is required' }, { status: 400 });
+    }
 
     // Validate using Zod
     const validationResult = registerSchema.safeParse({
@@ -44,6 +50,23 @@ export async function POST(req) {
         { error: 'error_email_in_use' },
         { status: 400 }
       );
+    }
+
+    // Verify OTP
+    const otpRecord = await db.otpRecord.findUnique({
+      where: { email },
+    });
+
+    if (!otpRecord) {
+      return NextResponse.json({ error: 'error_otp_not_found', message: 'Please request a new OTP' }, { status: 400 });
+    }
+
+    if (otpRecord.otpCode !== otpCode) {
+      return NextResponse.json({ error: 'error_invalid_otp', message: 'અમાન્ય OTP' }, { status: 400 });
+    }
+
+    if (new Date() > otpRecord.expiresAt) {
+      return NextResponse.json({ error: 'error_otp_expired', message: 'આ OTP સમયસમાપ્ત થઈ ગયો છે' }, { status: 400 });
     }
 
     let publicUrl = '';
@@ -90,6 +113,7 @@ export async function POST(req) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
+
     // Save to DB
     const newUser = await db.user.create({
       data: {
@@ -102,6 +126,11 @@ export async function POST(req) {
         role,
         status: role === 'ADMIN' ? 'APPROVED' : 'PENDING',
       },
+    });
+
+    // Delete OTP record after successful registration
+    await db.otpRecord.delete({
+      where: { email }
     });
 
     // Notify all Admins if a new regular user registers

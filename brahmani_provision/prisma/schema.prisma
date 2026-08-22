@@ -24,6 +24,14 @@ model User {
   transactions Transaction[]
 }
 
+model OtpRecord {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  otpCode   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 model Product {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   name         String

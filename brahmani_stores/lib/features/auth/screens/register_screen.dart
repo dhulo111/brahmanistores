@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/theme.dart';
+import 'otp_verification_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? googleData;
@@ -27,6 +28,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   
   File? _avatarFile;
   String? _googleAvatarUrl;
+  bool _showOtpScreen = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -84,32 +86,69 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     if (_formKey.currentState!.validate()) {
-      final formData = FormData.fromMap({
-        'firstName': _firstNameController.text,
-        'lastName': _lastNameController.text,
-        'email': _emailController.text,
-        'phone': _phoneController.text,
-        'password': _passwordController.text,
-      });
-
-      if (_avatarFile != null) {
-        formData.files.add(MapEntry(
-            'avatar', await MultipartFile.fromFile(_avatarFile!.path, filename: 'avatar.jpg')));
-      } else if (_googleAvatarUrl != null) {
-        formData.fields.add(MapEntry('avatarUrl', _googleAvatarUrl!));
-      }
-
-      final success = await ref.read(authProvider.notifier).register(formData);
+      final success = await ref.read(authProvider.notifier).sendOtp(
+        _emailController.text,
+        _firstNameController.text,
+        _lastNameController.text,
+      );
       
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('નોંધણી સફળ! હવે લૉગિન કરો.'), // Registration successful! Login now.
+            content: Text('તમારા ઈમેલ પર OTP મોકલવામાં આવ્યો છે.'), // OTP sent
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
-        context.go('/login');
+        setState(() {
+          _showOtpScreen = true;
+        });
       }
+    }
+  }
+
+  Future<void> _onOtpVerify(String otpCode) async {
+    final formData = FormData.fromMap({
+      'firstName': _firstNameController.text,
+      'lastName': _lastNameController.text,
+      'email': _emailController.text,
+      'phone': _phoneController.text,
+      'password': _passwordController.text,
+      'otpCode': otpCode,
+    });
+
+    if (_avatarFile != null) {
+      formData.files.add(MapEntry(
+          'avatar', await MultipartFile.fromFile(_avatarFile!.path, filename: 'avatar.jpg')));
+    } else if (_googleAvatarUrl != null) {
+      formData.fields.add(MapEntry('avatarUrl', _googleAvatarUrl!));
+    }
+
+    final success = await ref.read(authProvider.notifier).register(formData);
+    
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('વેરિફિકેશન સફળ! ખાતું બની ગયું છે.'), // Verification successful! Account created.
+          backgroundColor: AppTheme.primaryGreen,
+        ),
+      );
+      context.go('/login');
+    }
+  }
+
+  Future<void> _onOtpResend() async {
+    final success = await ref.read(authProvider.notifier).sendOtp(
+      _emailController.text,
+      _firstNameController.text,
+      _lastNameController.text,
+    );
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('નવો OTP મોકલવામાં આવ્યો છે.'), // New OTP sent
+          backgroundColor: AppTheme.primaryGreen,
+        ),
+      );
     }
   }
 
@@ -119,17 +158,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('નવું ખાતું બનાવો'), // Create new account
+        title: Text(_showOtpScreen ? 'OTP વેરિફિકેશન' : 'નવું ખાતું બનાવો'), // Create new account or OTP
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             ref.read(authProvider.notifier).clearError();
-            context.pop();
+            if (_showOtpScreen) {
+              setState(() { _showOtpScreen = false; });
+            } else {
+              context.pop();
+            }
           },
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: _showOtpScreen ? OtpVerificationWidget(
+          email: _emailController.text,
+          onVerify: _onOtpVerify,
+          onResend: _onOtpResend,
+        ) : SingleChildScrollView(
           padding: const EdgeInsets.all(32.0),
           child: Form(
             key: _formKey,
@@ -258,55 +305,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         )
                       : const Text('નોંધણી કરો'), // Register button
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const Expanded(child: Divider(color: AppTheme.textSecondary)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('અથવા', style: Theme.of(context).textTheme.bodyMedium), // OR
-                    ),
-                    const Expanded(child: Divider(color: AppTheme.textSecondary)),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // Google Register Button
-                ElevatedButton.icon(
-                  onPressed: authState.isLoading ? null : () async {
-                    final result = await ref.read(authProvider.notifier).loginWithGoogle();
-                    if (result != null) {
-                      if (result['action'] == 'login' && mounted) {
-                        // Already registered! Log them in.
-                        context.go('/');
-                      } else if (result['action'] == 'register' && mounted) {
-                        // Auto fill the form
-                        final googleData = result['data'] as Map<String, dynamic>?;
-                        if (googleData != null) {
-                          setState(() {
-                            _emailController.text = googleData['email'] ?? '';
-                            _firstNameController.text = googleData['firstName'] ?? '';
-                            _lastNameController.text = googleData['lastName'] ?? '';
-                            if (googleData['avatarUrl'] != null && googleData['avatarUrl'].toString().isNotEmpty) {
-                              _googleAvatarUrl = googleData['avatarUrl'];
-                              _avatarFile = null;
-                            }
-                          });
-                        }
-                      }
-                    }
-                  },
-                  icon: Image.network(
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
-                    height: 24,
-                  ),
-                  label: const Text('Google વડે ઓટો-ફિલ કરો (Auto-fill)', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 2,
-                  ),
-                ),
+
               ],
             ),
           ),
